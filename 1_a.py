@@ -33,28 +33,29 @@ def prepare_data(file_name):
 
 
 def euclidian(a, b):
-    return (a - b) ** 2
+    return abs(a - b)
 
 
 def distance(q, c, weight):
 
     g = np.zeros((len(q), len(c)))
-    for i in range(len(q)):
-        for j in range(len(c)):
-            if not i and not j:
-                g[i, j] = weight[1] * euclidian(q[i], c[j])
-            elif not j:
-                g[i, j] = weight[0] * euclidian(q[i], c[j]) + g[i - 1, j]
-            elif not i:
-                g[i, j] = weight[1] * euclidian(q[i], c[j]) + g[i][j - 1]
-            else:
-                g[i, j] = min(
-                    weight[0] * euclidian(q[i], c[j]) + g[i - 1, j],
-                    min(
-                        weight[1] * euclidian(q[i], c[j]) + g[i][j - 1],
-                        weight[2] * euclidian(q[i], c[j]) + g[i - 1][j - 1],
-                    ),
+    g[0, 0] = 2* euclidian(q[0], c[0])
+    for i in range(1, len(q)):
+        g[i, 0] = weight[0] * euclidian(q[i], c[0]) + g[i - 1, 0]
+    
+    for j in range(1, len(c)):
+        g[0, j] = weight[2] * euclidian(q[0], c[j]) + g[0, j - 1]
+
+ 
+    for i in range(1, len(q)):
+        for j in range(1, len(c)):
+            g[i, j] = min(
+                weight[0] * euclidian(q[i], c[j]) + g[i - 1, j],
+                min(
+                    weight[2] * euclidian(q[i], c[j]) + g[i][j - 1],
+                    weight[1] * euclidian(q[i], c[j]) + g[i - 1][j - 1],
                 )
+            )
     return g[len(q) - 1, len(c) - 1]
 
 
@@ -86,12 +87,18 @@ def process_dataset(file_name, df):
     # print(x_test)
     # print(y_test)
     # print(len(x_train[0]))
-    for weight in WEIGHT:
-        acc = cal_acc(x_train, y_train, x_test, y_test, weight)
-        print(f"{file_name}{weight}:{acc}")
-        df = df._append(
-            {"file_name": file_name, "weight": weight, "acc": acc}, ignore_index=True
-        )
+    for i in range(3):
+        for j in range(3):
+            for k in range(3):
+                if i==k:
+                    continue
+                weight = (i, j, k)
+                acc = cal_acc(x_train, y_train, x_test, y_test, weight)
+                print(f"{file_name}{weight}:{acc}")
+                df = df.append(
+                    {"file_name": file_name, "weight": weight, "acc": acc},
+                    ignore_index=True,
+                )
     return df
 
 
