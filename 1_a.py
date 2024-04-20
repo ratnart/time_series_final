@@ -80,26 +80,33 @@ def cal_acc(x_train, y_train, x_test, y_test, weight):
 
 
 def process_dataset(file_name, df):
+    # def process_dataset(file_name):
     x_train, y_train, x_test, y_test = prepare_data(file_name)
     # print(x_train)
     # print(y_train)
     # print(x_test)
     # print(y_test)
-    # print(len(x_train[0]))
+    # print(len(x_train[0
+    # ]))
     for weight in WEIGHT:
+
         acc = cal_acc(x_train, y_train, x_test, y_test, weight)
         print(f"{file_name}{weight}:{acc}")
-        df = df._append(
-            {"file_name": file_name, "weight": weight, "acc": acc}, ignore_index=True
-        )
-    return df
+        df = pd.DataFrame([file_name, weight, acc])
+        df.to_csv(excel_file_path, mode="a", index=False, header=False)
+        # df = df._append(
+        #     {"file_name": file_name, "weight": weight, "acc": acc}, ignore_index=True
+        # )
+    # return df
 
 
 def main():
-    df = pd.DataFrame(columns=COLUMNS)
+    df = pd.DataFrame(["file_name", "weight", "accuracy"])
+    df.to_csv(excel_file_path, mode="a", index=False, header=False)
     for file_name in FILE_NAME:
-        df = process_dataset(file_name, df)
-    df.to_csv(excel_file_path, index=False)
+        # df = process_dataset(file_name, df)
+        process_dataset(file_name)
+    # df.to_csv(excel_file_path, index=False)
 
 
 if __name__ == "__main__":
