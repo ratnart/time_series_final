@@ -5,7 +5,7 @@ FILE_NAME = ["Coffee", "50words", "Beef", "Gun_Point"]
 
 BASE_PATH = ""
 WEIGHT = [(1, 1, 1), (0, 1, 1), (1, 1, 0), (2, 1, 0), (0, 1, 2), (2, 1, 3), (3, 1, 2)]
-COLUMNS = ["file_name", "weight", "acc"]
+COLUMNS = ["file_name", "weight", "accuracy"]
 VERSION = "v1"
 excel_file_path = f"result_{VERSION}.csv"
 
@@ -33,28 +33,28 @@ def prepare_data(file_name):
 
 
 def euclidian(a, b):
-    return (a - b) ** 2
+    return abs(a - b)
 
 
 def distance(q, c, weight):
 
     g = np.zeros((len(q), len(c)))
-    for i in range(len(q)):
-        for j in range(len(c)):
-            if not i and not j:
-                g[i, j] = weight[1] * euclidian(q[i], c[j])
-            elif not j:
-                g[i, j] = weight[0] * euclidian(q[i], c[j]) + g[i - 1, j]
-            elif not i:
-                g[i, j] = weight[1] * euclidian(q[i], c[j]) + g[i][j - 1]
-            else:
-                g[i, j] = min(
-                    weight[0] * euclidian(q[i], c[j]) + g[i - 1, j],
-                    min(
-                        weight[1] * euclidian(q[i], c[j]) + g[i][j - 1],
-                        weight[2] * euclidian(q[i], c[j]) + g[i - 1][j - 1],
-                    ),
-                )
+    g[0, 0] = weight[1] * euclidian(q[0], c[0])
+    for i in range(1, len(q)):
+        g[i, 0] = weight[0] * euclidian(q[i], c[0]) + g[i - 1, 0]
+
+    for j in range(1, len(c)):
+        g[0, j] = weight[2] * euclidian(q[0], c[j]) + g[0, j - 1]
+
+    for i in range(1, len(q)):
+        for j in range(1, len(c)):
+            g[i, j] = min(
+                weight[0] * euclidian(q[i], c[j]) + g[i - 1, j],
+                min(
+                    weight[2] * euclidian(q[i], c[j]) + g[i][j - 1],
+                    weight[1] * euclidian(q[i], c[j]) + g[i - 1][j - 1],
+                ),
+            )
     return g[len(q) - 1, len(c) - 1]
 
 
@@ -79,30 +79,37 @@ def cal_acc(x_train, y_train, x_test, y_test, weight):
     return correct / len(x_test)
 
 
-def process_dataset(file_name, df):
+def process_dataset(file_name):
+    # def process_dataset(file_name, df):
     # def process_dataset(file_name):
     x_train, y_train, x_test, y_test = prepare_data(file_name)
     # print(x_train)
     # print(y_train)
     # print(x_test)
     # print(y_test)
-    # print(len(x_train[0
-    # ]))
-    for weight in WEIGHT:
-
-        acc = cal_acc(x_train, y_train, x_test, y_test, weight)
-        print(f"{file_name}{weight}:{acc}")
-        df = pd.DataFrame([file_name, weight, acc])
-        df.to_csv(excel_file_path, mode="a", index=False, header=False)
-        # df = df._append(
-        #     {"file_name": file_name, "weight": weight, "acc": acc}, ignore_index=True
-        # )
+    # print(len(x_train[0]))
+    for i in range(4):
+        for j in range(4):
+            for k in range(4):
+                if i == k:
+                    continue
+                weight = (i, j, k)
+                acc = cal_acc(x_train, y_train, x_test, y_test, weight)
+                print(f"{file_name}{weight}:{acc}")
+                df = pd.DataFrame(
+                    {"file_name": [file_name], "weight": [weight], "accuracy": [acc]}
+                )
+                df.to_csv(excel_file_path, mode="a", index=False, header=False)
+                # df = df.append(
+                #     {"file_name": file_name, "weight": weight, "acc": acc},
+                #     ignore_index=True,
+                # )
     # return df
 
 
 def main():
-    df = pd.DataFrame(["file_name", "weight", "accuracy"])
-    df.to_csv(excel_file_path, mode="a", index=False, header=False)
+    df = pd.DataFrame(columns=COLUMNS)
+    df.to_csv(excel_file_path, mode="a", index=False)
     for file_name in FILE_NAME:
         # df = process_dataset(file_name, df)
         process_dataset(file_name)
