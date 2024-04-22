@@ -26,7 +26,9 @@ def prepare_data(file_name):
             y_test.append(float(data_list[0]))
     return x_train, y_train, x_test, y_test
 
-x_train, y_train, x_test, y_test = prepare_data("Beef")
+FILE_NAME  = "Gun_Point"
+
+x_train, y_train, x_test, y_test = prepare_data(FILE_NAME)
 
 # x_train = [[0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 #            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0]]
@@ -120,12 +122,25 @@ for i in range(len(y_train)):
     cluster[y_train[i]].append(x_train[i])
 
 representatives = {}
+amplitude_representatives = {}
+
+
+def get_amplitude_avg(x_train):
+    base = np.zeros(len(x_train[0]))
+
+    for i in range(len(x_train)):
+        base += x_train[i]
+
+    base = base / len(x_train)
+
+    return base
 
 for key in cluster.keys():
     print(key)
     # plt.plot(cluster[key])
     # plt.show()
     representatives[key] = get_shape_avg(cluster[key])
+    amplitude_representatives[key] = get_amplitude_avg(cluster[key])
 
 correct = 0
 
@@ -141,14 +156,29 @@ for i in range(len(x_test)):
     if cls == y_test[i]:
         correct += 1
 
-print("Accuracy=", correct / len(x_test))
+print("Shape based Accuracy=", correct / len(x_test))
     
 
-def plot(cluster, representatives):
+correct = 0
+
+for i in range(len(x_test)):
+    best_so_far = 1e9
+    cls = -1
+    for key in amplitude_representatives.keys():
+        dist, _ = shape_average(x_test[i], representatives[key])
+        if dist < best_so_far:
+            best_so_far = dist
+            cls = key
+
+print("Amplitude based Accuracy=", correct / len(x_test))
+
+def plot(cluster, representatives, method="shape"):
     for key in cluster.keys():
+        plt.title(f"{method} averaging result for Dataset {FILE_NAME} Class {int(key)}")
         plt.plot(representatives[key], color='blue', linestyle='-')
         for series in cluster[key]:
             plt.plot(series, color='red', linestyle='--')
         plt.show()
 
-plot(cluster, representatives)
+plot(cluster, representatives, "shape")
+plot(cluster, amplitude_representatives, "amplitude")
